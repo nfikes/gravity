@@ -1,4 +1,4 @@
-(ns gravity.canvas)
+(ns canvas.core)
 
 (def TWO-PI (* 2 Math/PI))
 

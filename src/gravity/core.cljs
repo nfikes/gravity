@@ -1,6 +1,6 @@
 (ns gravity.core
   (:require
-    [gravity.canvas :as c]))
+    [canvas.core :as c]))
 
 (def spaceship
   {:x     300
