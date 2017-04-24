@@ -27,8 +27,13 @@
    :color :yellow})
 
 (def controller
-  {:x 50
-   :y 600})
+  {:box {:x 40
+         :y 700
+         :w 200
+         :h 200}
+   :stick {:x 140
+           :y 800}
+   :active false})
 
 (defn square
   [x]
@@ -150,11 +155,10 @@
 
 (defn draw-controller
   []
-  (let [controller (:controller @universe)]
+  (let [{:keys [box stick]} (:controller @universe)]
     (c/stroke-style "#B0E0E6")
-    (c/stroke-rect 40 800 200 200)
-    (c/stroke-rect 45 805 190 190)
-    (c/stroke-circle (:x controller) (:y controller) 30)))
+    (c/stroke-rect (:x box) (:y box) (:w box) (:h box))
+    (c/stroke-circle (:x stick) (:y stick) 30)))
 
 (defn draw-state
   []
