@@ -166,8 +166,8 @@
           (c/fill-rect (:x spaceship) (:y spaceship) rect-size rect-size)))
       (swap! ndx inc)))
   (doseq [star (:stars @universe)]
-    (c/fill-style "#ffff00")
-    (c/fill-circle (:x star) (:y star) (:radius star)))
+    (c/stroke-style "#ffff00")
+    (c/stroke-circle (:x star) (:y star) (:radius star)))
   (c/fill-style "#B0E0E6")
   (c/fill-rect 0 0 768 24))
 

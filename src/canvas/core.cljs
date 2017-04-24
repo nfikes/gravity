@@ -13,6 +13,10 @@
   [fs]
   (set! (.-fillStyle ctx) fs))
 
+(defn stroke-style
+  [ss]
+  (set! (.-strokeStyle ctx) ss))
+
 (defn clear-rect [x y w h]
   (.clearRect ctx x y w h))
 
@@ -25,6 +29,12 @@
   (.beginPath ctx)
   (.arc ctx x y radius 0 TWO-PI)
   (.fill ctx))
+
+(defn stroke-circle
+  [x y radius]
+  (.beginPath ctx)
+  (.arc ctx x y radius 0 TWO-PI)
+  (.stroke ctx))
 
 (defn register-touch-begin
   [f]
