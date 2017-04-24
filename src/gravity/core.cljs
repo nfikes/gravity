@@ -26,6 +26,10 @@
    :radius 100
    :color :yellow})
 
+(def controller
+  {:x 50
+   :y 600})
+
 (defn square
   [x]
   (* x x))
@@ -112,18 +116,22 @@
 
 (defn update-universe
   [universe]
-  {:spaceships (map (fn [spaceship]
-                      (update-spaceship spaceship (:stars universe)))
-                    (remove (fn [spaceship] (collide? spaceship (:stars universe))) (:spaceships universe)))
-   :stars      (map (fn [star]
-                      (update-star star (:spaceships universe) (remove #{star} (:stars universe))))
-                    (:stars universe))})
+  (-> universe
+      (update :spaceships (fn [spaceships]
+                            (map (fn [spaceship]
+                                   (update-spaceship spaceship (:stars universe)))
+                                 (remove (fn [spaceship] (collide? spaceship (:stars universe))) spaceships))))
+      (update :stars (fn [stars]
+                       (map (fn [star]
+                              (update-star star (:spaceships universe) (remove #{star} (:stars universe))))
+                            stars)))))
 
 
 (def initial-state {:spaceships (map (fn [n]
                                        (update spaceship :x + -500 (* 100 n)))
                                      (range 7))
-                    :stars      [star1 star2]})
+                    :stars      [star1 star2]
+                    :controller controller})
 
 (defonce universe (atom initial-state))
 
@@ -140,16 +148,13 @@
   (swap! older-universes #(take 10 %))
   (swap! universe update-universe))
 
-(defn handle-touch-end
-  [x y]
-  (swap! universe
-         update :stars #(map-indexed (fn [ndx star]
-                                      (if (zero? ndx)
-                                        (assoc star :x x :y y)
-                                        star))
-                                     %)))
-
-(c/register-touch-end #(handle-touch-end %1 %2))
+(defn draw-controller
+  []
+  (let [controller (:controller @universe)]
+    (c/stroke-style "#B0E0E6")
+    (c/stroke-rect 40 800 200 200)
+    (c/stroke-rect 45 805 190 190)
+    (c/stroke-circle (:x controller) (:y controller) 30)))
 
 (defn draw-state
   []
@@ -157,19 +162,21 @@
   (let [ndx (atom 0)]
     (doseq [older-universe (reverse @older-universes)]
       (doseq [spaceship (:spaceships older-universe)]
-        (let [fill-styles ["#000000" "#110000" "#220000" "#330000"
+        (let [stroke-styles ["#000000" "#110000" "#220000" "#330000"
                            "#440000" "#550000" "#660000" "#770000"
                            "#880000" "#990000" "#aa0000" "#bb0000"
                            "#cc0000" "#dd0000" "#ee0000" "#ff0000"]
               rect-size (- 20 (/ @ndx 2))]
-          (c/fill-style (fill-styles @ndx))
-          (c/fill-rect (:x spaceship) (:y spaceship) rect-size rect-size)))
+          (c/stroke-style (stroke-styles @ndx))
+          (c/stroke-rect (:x spaceship) (:y spaceship) rect-size rect-size)))
       (swap! ndx inc)))
   (doseq [star (:stars @universe)]
     (c/stroke-style "#ffff00")
     (c/stroke-circle (:x star) (:y star) (:radius star)))
   (c/fill-style "#B0E0E6")
-  (c/fill-rect 0 0 768 24))
+  (c/fill-rect 0 0 768 24)
+  (draw-controller))
+
 
 (defonce interval-id-atom (atom nil))
 
