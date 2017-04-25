@@ -129,7 +129,12 @@
       (update :stars (fn [stars]
                        (map (fn [star]
                               (update-star star (:spaceships universe) (remove #{star} (:stars universe))))
-                            stars)))))
+                            stars)))
+      (update :controller (fn [controller]
+                            (cond-> controller
+                                    (not (:active controller))
+                                    (assoc :stick {:x (+ (-> controller :box :x) (/ (-> controller :box :w) 2))
+                                                   :y (+ (-> controller :box :y) (/ (-> controller :box :h) 2))}))))))
 
 
 (def initial-state {:spaceships (map (fn [n]
@@ -146,6 +151,52 @@
   []
   (reset! universe initial-state)
   (reset! older-universes ()))
+
+(defn in-controller?
+  [controller x y]
+  (let [box (:box controller)]
+    (and (< (:x box) x (+ (:x box) (:w box)))
+         (< (:y box) y (+ (:y box) (:h box))))))
+
+(defn touch-start
+  [x y]
+  (swap! universe
+         (fn [{:keys [controller] :as u}]
+           (cond
+             (in-controller? controller x y)
+             (assoc u :controller (-> controller
+                                      (assoc :active true)
+                                      (assoc :stick {:x x :y y})))
+             :else
+             u))))
+
+(c/register-touch-start #(touch-start %1 %2))
+
+(defn touch-move
+  [x y]
+  (swap! universe
+         (fn [{:keys [controller] :as u}]
+           (cond
+             (:active controller)
+             (cond-> u
+                (in-controller? controller x y)
+                     (assoc-in [:controller :stick] {:x x :y y}))
+             :else
+             u))))
+
+(c/register-touch-move #(touch-move %1 %2))
+
+(defn touch-end
+  [x y]
+  (swap! universe
+         (fn [{:keys [controller] :as u}]
+           (cond
+             (:active controller)
+             (assoc-in u [:controller :active] false)
+             :else
+             u))))
+
+(c/register-touch-end #(touch-end %1 %2))
 
 (defn update-state
   []
