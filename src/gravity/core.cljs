@@ -28,9 +28,9 @@
 
 (def controller
   {:box {:x 40
-         :y 700
-         :w 200
-         :h 200}
+         :y 800
+         :w 190
+         :h 190}
    :stick {:x 140
            :y 800}
    :active false})
@@ -209,6 +209,7 @@
   (let [{:keys [box stick]} (:controller @universe)]
     (c/stroke-style "#B0E0E6")
     (c/stroke-rect (:x box) (:y box) (:w box) (:h box))
+    (c/stroke-rect (+ (:x box) 5) (+ (:y box) 5) (- (:w box) 10) (- (:h box) 10))
     (c/stroke-circle (:x stick) (:y stick) 30)))
 
 (defn draw-state
