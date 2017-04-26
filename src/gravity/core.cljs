@@ -60,6 +60,13 @@
   [v]
   (Math/sqrt (+ (square (:x v)) (square (:y v)))))
 
+(defn limit
+  [v r]
+  (let [l (length v)]
+    (if (< l r)
+      v
+      (scale (/ r l) v))))
+
 (defn calc-distance
   [a b]
   (max 60 (length (difference b a))))
