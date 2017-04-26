@@ -34,6 +34,17 @@
             :y 800}
    :active false})
 
+(defn square
+  [x]
+  (* x x))
+
+;; Vector functions
+
+(defn sum
+  [a b]
+  {:x (+ (:x a) (:x b))
+   :y (+ (:y a) (:y b))})
+
 (defn difference
   [a b]
   {:x (- (:x a) (:x b))
@@ -45,18 +56,13 @@
       (update :x * k)
       (update :y * k)))
 
-(defn square
-  [x]
-  (* x x))
-
 (defn length
-  [a-x a-y b-x b-y]
-  (Math/sqrt (+ (square (- a-x b-x))
-                (square (- a-y b-y)))))
+  [v]
+  (Math/sqrt (+ (square (:x v)) (square (:y v)))))
 
 (defn calc-distance
   [a b]
-  (max 60 (length (:x a) (:y a) (:x b) (:y b))))
+  (max 60 (length (difference b a))))
 
 (defn calc-acceleration
   [a b]
@@ -74,7 +80,7 @@
   [spaceship stars]
   (some (fn [star]
           (let [size (:radius star)]
-            (< (length (:x star) (:y star) (:x spaceship) (:y spaceship)) size)))
+            (< (length (difference star spaceship)) size)))
         stars))
 
 (declare add-accelerations)
