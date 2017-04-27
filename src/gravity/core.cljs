@@ -30,8 +30,8 @@
             :y 800
             :w 190
             :h 190}
-   :stick  {:x 140
-            :y 800}
+   :stick  {:x 0
+            :y 0}
    :active false})
 
 (defn square
@@ -105,7 +105,7 @@
                                                         :y (+ (:y spaceship) (/ (:v-y spaceship) 2))})
                                                 star))
                            stars)
-        thrust (scale 0.005 (difference (:stick controller) (center-of-controller controller)))
+        thrust (scale 0.005 (:stick controller))
         acceleration (-> (add-accelerations accelerations)
                          (update :a-x + (:x thrust))
                          (update :a-y + (:y thrust)))]
@@ -165,7 +165,7 @@
       (update :controller (fn [controller]
                             (cond-> controller
                                     (not (:active controller))
-                                    (assoc :stick (center-of-controller controller)))))))
+                                    (assoc :stick {:x 0 :y 0}))))))
 
 
 (def initial-state {:spaceships (map (fn [n]
@@ -181,41 +181,49 @@
   (reset! universe initial-state))
 
 (defn in-controller?
-  [controller x y]
+  [controller pos]
+  (prn pos)
   (let [box (:box controller)]
-    (and (< (:x box) x (+ (:x box) (:w box)))
-         (< (:y box) y (+ (:y box) (:h box))))))
+    (and (< (:x box) (:x pos) (+ (:x box) (:w box)))
+         (< (:y box) (:y pos) (+ (:y box) (:h box))))))
+
+(defn controller-limit
+  [controller]
+  (/ (:w (:box controller)) 2))
+
+(defn touch-pos->stick
+  [pos controller]
+  (limit (difference pos (center-of-controller controller))
+         (controller-limit controller)))
 
 (defn touch-start
-  [x y]
+  [pos]
   (swap! universe
          (fn [{:keys [controller] :as u}]
            (cond
-             (in-controller? controller x y)
+             (in-controller? controller pos)
              (assoc u :controller (-> controller
                                       (assoc :active true)
-                                      (assoc :stick {:x x :y y})))
+                                      (assoc :stick (touch-pos->stick pos controller))))
              :else
              u))))
 
-(c/register-touch-start #(touch-start %1 %2))
+(c/register-touch-start #(touch-start %))
 
 (defn touch-move
-  [x y]
+  [pos]
   (swap! universe
          (fn [{:keys [controller] :as u}]
            (cond
              (:active controller)
-             (cond-> u
-                     (in-controller? controller x y)
-                     (assoc-in [:controller :stick] {:x x :y y}))
+             (assoc-in u [:controller :stick] (touch-pos->stick pos controller))
              :else
              u))))
 
-(c/register-touch-move #(touch-move %1 %2))
+(c/register-touch-move #(touch-move %))
 
 (defn touch-end
-  [x y]
+  [pos]
   (swap! universe
          (fn [{:keys [controller] :as u}]
            (cond
@@ -224,7 +232,7 @@
              :else
              u))))
 
-(c/register-touch-end #(touch-end %1 %2))
+(c/register-touch-end #(touch-end %))
 
 (defn update-state
   []
@@ -236,7 +244,8 @@
     (c/stroke-style "#B0E0E6")
     (c/stroke-rect (:x box) (:y box) (:w box) (:h box))
     (c/stroke-rect (+ (:x box) 5) (+ (:y box) 5) (- (:w box) 10) (- (:h box) 10))
-    (c/stroke-circle (:x stick) (:y stick) 30)))
+    (c/stroke-circle (+ (:x box) (/ (:w box) 2) (:x stick))
+                     (+ (:y box) (/ (:h box) 2) (:y stick)) 30)))
 
 (defn draw-state
   []

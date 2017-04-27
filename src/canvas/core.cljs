@@ -53,7 +53,7 @@
   [f]
   (fn [ev]
     (let [t (aget (.-changedTouches ev) 0)]
-      (f (.-pageX t) (.-pageY t)))))
+      (f {:x (.-pageX t) :y (.-pageY t)}))))
 
 (defonce touch-move-listener-atom (atom nil))
 
