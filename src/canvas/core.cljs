@@ -1,4 +1,6 @@
-(ns canvas.core)
+(ns canvas.core
+  (:require
+    [vector.core :as v]))
 
 (def TWO-PI (* 2 Math/PI))
 
@@ -17,27 +19,27 @@
   [ss]
   (set! (.-strokeStyle ctx) ss))
 
-(defn clear-rect [x y w h]
-  (.clearRect ctx x y w h))
+(defn clear-rect [pos size]
+  (.clearRect ctx (.-x pos) (.-y pos) (.-x size) (.-y size)))
 
 (defn fill-rect
-  [x y w h]
-  (.fillRect ctx x y w h))
+  [pos size]
+  (.fillRect ctx (.-x pos) (.-y pos) (.-x size) (.-y size)))
 
 (defn stroke-rect
-  [x y w h]
-  (.strokeRect ctx x y w h))
+  [pos size]
+  (.strokeRect ctx (.-x pos) (.-y pos) (.-x size) (.-y size)))
 
 (defn fill-circle
-  [x y radius]
+  [pos radius]
   (.beginPath ctx)
-  (.arc ctx x y radius 0 TWO-PI)
+  (.arc ctx (.-x pos) (.-y pos) radius 0 TWO-PI)
   (.fill ctx))
 
 (defn stroke-circle
-  [x y radius]
+  [pos radius]
   (.beginPath ctx)
-  (.arc ctx x y radius 0 TWO-PI)
+  (.arc ctx (.-x pos) (.-y pos) radius 0 TWO-PI)
   (.stroke ctx))
 
 (defn register-handler
@@ -53,7 +55,7 @@
   [f]
   (fn [ev]
     (let [t (aget (.-changedTouches ev) 0)]
-      (f {:x (.-pageX t) :y (.-pageY t)}))))
+      (f (v/->Vector (.-pageX t) (.-pageY t))))))
 
 (defonce touch-move-listener-atom (atom nil))
 

@@ -1,153 +1,98 @@
 (ns gravity.core
   (:require
-    [canvas.core :as c]))
+    [canvas.core :as c]
+    [vector.core :as v]))
 
 (def spaceship
-  {:pos   {:x 10
-           :y 500}
-   :vel   {:x 2
-           :y 0}
+  {:pos   (v/vector 10 500)
+   :vel   (v/vector 2 0)
    :color :red})
 
 (def star1
-  {:pos    {:x 300
-            :y 600}
-   :vel    {:x 0
-            :y 0}
-   :radius 100
-   :color  :yellow})
-
-(def star2
-  {:pos    {:x 210
-            :y 1300}
-   :vel    {:x 0
-            :y -1}
+  {:pos    (v/vector 300 600)
+   :vel    v/zero
    :radius 100
    :color  :yellow})
 
 (def controller
-  {:box    {:x 40
-            :y 800
-            :w 190
-            :h 190}
-   :stick  {:x 0
-            :y 0}
+  {:box    {:pos (v/vector 40 800)
+            :size (v/vector 190 190)}
+   :stick  v/zero
    :active false})
 
 (defn square
   [x]
   (* x x))
 
-;; Vector functions
-
-(defn sum
-  [a b]
-  {:x (+ (:x a) (:x b))
-   :y (+ (:y a) (:y b))})
-
-(defn difference
-  [a b]
-  {:x (- (:x a) (:x b))
-   :y (- (:y a) (:y b))})
-
-(defn scale
-  [k v]
-  (-> v
-      (update :x * k)
-      (update :y * k)))
-
-(defn length
-  [v]
-  (Math/sqrt (+ (square (:x v)) (square (:y v)))))
-
 (defn limit
   [v r]
-  (let [l (length v)]
+  (let [l (v/length v)]
     (if (< l r)
       v
-      (scale (/ r l) v))))
+      (v/scale (/ r l) v))))
 
 (defn calc-distance
   [a b]
-  (max 60 (length (difference b a))))
+  (max 60 (v/length (v/- b a))))
 
 (defn calc-acceleration
   [a b]
   (let [distance (calc-distance (:pos a) (:pos b))
-        delta-x (- (-> a :pos :x) (-> b :pos :x))
-        delta-y (- (-> a :pos :y) (-> b :pos :y))
         accel-strength (/ -1000 (square distance))
-        ratio (/ accel-strength distance)
-        a-x (* ratio delta-x)
-        a-y (* ratio delta-y)]
-    {:x a-x
-     :y a-y}))
+        ratio (/ accel-strength distance)]
+    (v/scale ratio (v/- (:pos a) (:pos b)))))
 
 (defn collide?
   [spaceship stars]
   (some (fn [star]
           (let [size (:radius star)]
-            (< (length (difference (:pos star) (:pos spaceship))) size)))
+            (< (v/length (v/- (:pos star) (:pos spaceship))) size)))
         stars))
-
-(declare add-accelerations)
 
 (defn center-of-controller
   [controller]
-  {:x (+ (-> controller :box :x) (/ (-> controller :box :w) 2))
-   :y (+ (-> controller :box :y) (/ (-> controller :box :h) 2))})
+  (v/+ (-> controller :box :pos) (v/scale 0.5 (-> controller :box :size))))
 
 (defn update-spaceship
   [spaceship stars controller]
   (let [accelerations (map (fn [star]
                              (calc-acceleration (merge spaceship
-                                                       {:pos {:x (+ (-> spaceship :pos :x) (/ (-> spaceship :vel :x) 2))
-                                                              :y (+ (-> spaceship :pos :y) (/ (-> spaceship :vel :y) 2))}})
+                                                       {:pos (v/map->Vector {:x (+ (-> spaceship :pos :x) (/ (-> spaceship :vel :x) 2))
+                                                                             :y (+ (-> spaceship :pos :y) (/ (-> spaceship :vel :y) 2))})})
                                                 star))
                            stars)
-        thrust (scale 0.001 (:stick controller))
-        acceleration (-> (add-accelerations accelerations)
-                         (update :x + (:x thrust))
-                         (update :y + (:y thrust)))]
-    {:pos   {:x (mod (+ (-> spaceship :pos :x) (-> spaceship :vel :x) (/ (:x acceleration) 2)) 768)
-             :y (mod (+ (-> spaceship :pos :y) (-> spaceship :vel :y) (/ (:y acceleration) 2)) 1024)}
-     :vel   (limit {:x (+ (-> spaceship :vel :x) (:x acceleration))
-                    :y (+ (-> spaceship :vel :y) (:y acceleration))} 3)
+        thrust (v/scale 0.001 (:stick controller))
+        acceleration (-> (apply v/+ accelerations)
+                         (v/+ thrust))]
+    {:pos   (v/map->Vector {:x (mod (+ (-> spaceship :pos :x) (-> spaceship :vel :x) (/ (:x acceleration) 2)) 768)
+                            :y (mod (+ (-> spaceship :pos :y) (-> spaceship :vel :y) (/ (:y acceleration) 2)) 1024)})
+     :vel   (limit (v/map->Vector {:x (+ (-> spaceship :vel :x) (:x acceleration))
+                                   :y (+ (-> spaceship :vel :y) (:y acceleration))}) 3)
      :color (:color spaceship)
      :test  (:test spaceship)}))
 
-(defn add-accelerations
-  [accelerations]
-  (reduce (fn [acc acceleration]
-            {:x (+ (:x acc) (:x acceleration))
-             :y (+ (:y acc) (:y acceleration))})
-          {:x 0
-           :y 0}
-          accelerations))
-
 (defn weaken
   [acceleration]
-  {:x (/ (:x acceleration) 1000)
-   :y (/ (:y acceleration) 1000)})
+  (v/scale 0.001 acceleration))
 
 (defn update-star
   [star spaceships other-stars]
   (let [accelerations-spaceships (map (fn [spaceship]
                                         (calc-acceleration star spaceship))
                                       spaceships)
-        acceleration-spaceships (weaken (add-accelerations accelerations-spaceships))
+        acceleration-spaceships (weaken (apply v/+ accelerations-spaceships))
         accelerations-stars (map (fn [other-star]
                                    (calc-acceleration star other-star))
                                  other-stars)
-        acceleration-stars (add-accelerations accelerations-stars)
-        acceleration (add-accelerations [acceleration-spaceships acceleration-stars])]
+        acceleration-stars (apply v/+ accelerations-stars)
+        acceleration (v/+ acceleration-spaceships acceleration-stars)]
     (assoc star :color (case (:color star)
                          :yellow :light-blue
                          :light-blue :yellow)
-                :pos {:x (mod (+ (-> star :pos :x) (-> star :vel :x) (/ (:x acceleration) 2)) 768)
-                      :y (mod (+ (-> star :pos :y) (-> star :vel :y) (/ (:y acceleration) 2)) 1024)}
-                :vel (limit {:x (+ (-> star :vel :x) (:x acceleration))
-                             :y (+ (-> star :vel :y) (:y acceleration))} 2)
+                :pos (v/map->Vector {:x (mod (+ (-> star :pos :x) (-> star :vel :x) (/ (:x acceleration) 2)) 768)
+                                     :y (mod (+ (-> star :pos :y) (-> star :vel :y) (/ (:y acceleration) 2)) 1024)})
+                :vel (limit (v/map->Vector {:x (+ (-> star :vel :x) (:x acceleration))
+                                            :y (+ (-> star :vel :y) (:y acceleration))}) 2)
                 :radius (min 43 (max 42 (+ (:radius star) (- (rand-int 3) 1)))))))
 
 
@@ -165,7 +110,7 @@
       (update :controller (fn [controller]
                             (cond-> controller
                                     (not (:active controller))
-                                    (assoc :stick {:x 0 :y 0}))))))
+                                    (assoc :stick v/zero))))))
 
 
 (def initial-state {:spaceships [spaceship]
@@ -181,16 +126,16 @@
 (defn in-controller?
   [controller pos]
   (let [box (:box controller)]
-    (and (< (:x box) (:x pos) (+ (:x box) (:w box)))
-         (< (:y box) (:y pos) (+ (:y box) (:h box))))))
+    (and (< (:x (:pos box)) (:x pos) (+ (:x (:pos box)) (:x (:size box))))
+         (< (:y (:pos box)) (:y pos) (+ (:y (:pos box)) (:y (:size box)))))))
 
 (defn controller-limit
   [controller]
-  (/ (:w (:box controller)) 2))
+  (/ (:x (:size (:box controller))) 2))
 
 (defn touch-pos->stick
   [pos controller]
-  (limit (difference pos (center-of-controller controller))
+  (limit (v/- pos (center-of-controller controller))
          (controller-limit controller)))
 
 (defn touch-start
@@ -237,24 +182,23 @@
 
 (defn draw-controller
   []
-  (let [{:keys [box stick]} (:controller @universe)]
+  (let [{:keys [box stick] :as controller} (:controller @universe)]
     (c/stroke-style "#B0E0E6")
-    (c/stroke-rect (:x box) (:y box) (:w box) (:h box))
-    (c/stroke-rect (+ (:x box) 5) (+ (:y box) 5) (- (:w box) 10) (- (:h box) 10))
-    (c/stroke-circle (+ (:x box) (/ (:w box) 2) (:x stick))
-                     (+ (:y box) (/ (:h box) 2) (:y stick)) 30)))
+    (c/stroke-rect (:pos box) (:size box))
+    #_(c/stroke-rect (+ (:x box) 5) (+ (:y box) 5) (- (:w box) 10) (- (:h box) 10))
+    (c/stroke-circle (v/+ (center-of-controller controller) (:stick controller)) 30)))
 
 (defn draw-state
   []
-  (c/clear-rect 0 0 768 1024)
+  (c/clear-rect v/zero (v/vector 768 1024))
   (c/stroke-style "#ff0000")
   (doseq [spaceship (:spaceships @universe)]
-    (c/stroke-rect (-> spaceship :pos :x) (-> spaceship :pos :y) 20 20))
+    (c/stroke-rect (v/- (:pos spaceship) (v/vector 10 10)) (v/vector 20 20)))
   (doseq [star (:stars @universe)]
     (c/stroke-style "#ffff00")
-    (c/stroke-circle (-> star :pos :x) (-> star :pos :y) (:radius star)))
+    (c/stroke-circle (:pos star) (:radius star)))
   (c/fill-style "#B0E0E6")
-  (c/fill-rect 0 0 768 24)
+  (c/fill-rect v/zero (v/vector 768 24))
   (draw-controller))
 
 
