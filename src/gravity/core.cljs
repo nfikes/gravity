@@ -85,11 +85,9 @@
 
 (defn collide?
   [spaceship stars]
-  false
-
-  #_(some (fn [star]
+  (some (fn [star]
           (let [size (:radius star)]
-            (< (length (difference star spaceship)) size)))
+            (< (length (difference (:pos star) (:pos spaceship))) size)))
         stars))
 
 (declare add-accelerations)
