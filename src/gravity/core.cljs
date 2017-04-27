@@ -261,7 +261,7 @@
 (defonce interval-id-atom (atom nil))
 
 (defn run
-  ([] (run 30))
+  ([] (run 60))
   ([fps]
    (swap! interval-id-atom
           (fn [interval-id]
