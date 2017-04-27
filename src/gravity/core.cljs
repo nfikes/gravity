@@ -182,7 +182,6 @@
 
 (defn in-controller?
   [controller pos]
-  (prn pos)
   (let [box (:box controller)]
     (and (< (:x box) (:x pos) (+ (:x box) (:w box)))
          (< (:y box) (:y pos) (+ (:y box) (:h box))))))
