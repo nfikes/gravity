@@ -4,7 +4,7 @@
     [vector.core :as v]))
 
 (def spaceship
-  {:pos   (v/vector 10 500)
+  {:pos   (v/vector 10 300)
    :vel   (v/vector 2 0)
    :color :red})
 
@@ -57,17 +57,14 @@
   [spaceship stars controller]
   (let [accelerations (map (fn [star]
                              (calc-acceleration (merge spaceship
-                                                       {:pos (v/map->Vector {:x (+ (-> spaceship :pos :x) (/ (-> spaceship :vel :x) 2))
-                                                                             :y (+ (-> spaceship :pos :y) (/ (-> spaceship :vel :y) 2))})})
+                                                       {:pos (v/+ (:pos spaceship) (v/scale 0.5 (:vel spaceship)))})
                                                 star))
                            stars)
         thrust (v/scale 0.001 (:stick controller))
         acceleration (-> (apply v/+ accelerations)
                          (v/+ thrust))]
-    {:pos   (v/map->Vector {:x (mod (+ (-> spaceship :pos :x) (-> spaceship :vel :x) (/ (:x acceleration) 2)) 768)
-                            :y (mod (+ (-> spaceship :pos :y) (-> spaceship :vel :y) (/ (:y acceleration) 2)) 1024)})
-     :vel   (limit (v/map->Vector {:x (+ (-> spaceship :vel :x) (:x acceleration))
-                                   :y (+ (-> spaceship :vel :y) (:y acceleration))}) 3)
+    {:pos   (v/mod (v/+ (:pos spaceship) (:vel spaceship) (v/scale 0.5 acceleration)) (v/vector 768 1024))
+     :vel   (limit (v/+ (:vel spaceship) acceleration) 3)
      :color (:color spaceship)
      :test  (:test spaceship)}))
 
@@ -89,10 +86,8 @@
     (assoc star :color (case (:color star)
                          :yellow :light-blue
                          :light-blue :yellow)
-                :pos (v/map->Vector {:x (mod (+ (-> star :pos :x) (-> star :vel :x) (/ (:x acceleration) 2)) 768)
-                                     :y (mod (+ (-> star :pos :y) (-> star :vel :y) (/ (:y acceleration) 2)) 1024)})
-                :vel (limit (v/map->Vector {:x (+ (-> star :vel :x) (:x acceleration))
-                                            :y (+ (-> star :vel :y) (:y acceleration))}) 2)
+                :pos (v/mod (v/+ (:pos star) (:vel star) (v/scale 0.5 acceleration)) (v/vector 768 1024))
+                :vel (limit (v/+ (:vel star) acceleration) 2)
                 :radius (min 43 (max 42 (+ (:radius star) (- (rand-int 3) 1)))))))
 
 

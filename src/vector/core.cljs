@@ -1,5 +1,5 @@
 (ns vector.core
-  (:refer-clojure :exclude [vector + -]))
+  (:refer-clojure :exclude [vector + - mod]))
 
 (defrecord Vector [x y])
 
@@ -34,3 +34,8 @@
   [v]
   (Math/sqrt (cljs.core/+ (* (.-x v) (.-x v))
                           (* (.-y v) (.-y v)))))
+
+(defn mod
+  [v1 v2]
+  (->Vector (cljs.core/mod (.-x v1) (.-x v2))
+            (cljs.core/mod (.-y v1) (.-y v2))))
