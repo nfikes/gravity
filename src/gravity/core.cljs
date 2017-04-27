@@ -76,7 +76,7 @@
   (let [distance (calc-distance (:pos a) (:pos b))
         delta-x (- (-> a :pos :x) (-> b :pos :x))
         delta-y (- (-> a :pos :y) (-> b :pos :y))
-        accel-strength (/ -500 (square distance))
+        accel-strength (/ -1000 (square distance))
         ratio (/ accel-strength distance)
         a-x (* ratio delta-x)
         a-y (* ratio delta-y)]
