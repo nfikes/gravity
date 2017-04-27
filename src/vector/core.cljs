@@ -1,5 +1,7 @@
 (ns vector.core
-  (:refer-clojure :exclude [vector + - mod]))
+  (:refer-clojure :exclude [vector + - mod])
+  (:require-macros
+    [vector.core]))
 
 (defrecord Vector [x y])
 
@@ -13,29 +15,26 @@
   ([] zero)
   ([v1] v1)
   ([v1 v2]
-   (->Vector (cljs.core/+ (.-x v1) (.-x v2))
-             (cljs.core/+ (.-y v1) (.-y v2))))
+    (vector.core/+ v1 v2))
   ([v1 v2 & more]
     (reduce + (+ v1 v2) more)))
 
 (defn -
-  ([v1] (->Vector (cljs.core/- (.-x v1)) (cljs.core/- (.-y v1))))
+  ([v1]
+    (vector.core/- v1))
   ([v1 v2]
-   (->Vector (cljs.core/- (.-x v1) (.-x v2))
-             (cljs.core/- (.-y v1) (.-y v2))))
+   (vector.core/- v1 v2))
   ([v1 v2 & more]
    (reduce - (- v1 v2) more)))
 
 (defn scale
   [k v]
-  (->Vector (* k (.-x v)) (* k (.-y v))))
+  (vector.core/scale k v))
 
 (defn length
   [v]
-  (Math/sqrt (cljs.core/+ (* (.-x v) (.-x v))
-                          (* (.-y v) (.-y v)))))
+  (vector.core/length v))
 
 (defn mod
   [v1 v2]
-  (->Vector (cljs.core/mod (.-x v1) (.-x v2))
-            (cljs.core/mod (.-y v1) (.-y v2))))
+  (vector.core/mod v1 v2))
