@@ -5,4 +5,4 @@
 
  (defn connect
    []
-   (repl/repl (ambly/repl-env)))
+   (repl/repl (ambly/repl-env) :analyze-path "src"))
