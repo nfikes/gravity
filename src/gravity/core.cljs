@@ -10,10 +10,10 @@
    :color :red})
 
 (def star1
-  {:pos    {:x 600
+  {:pos    {:x 300
             :y 600}
    :vel    {:x 0
-            :y 1}
+            :y 0}
    :radius 100
    :color  :yellow})
 
@@ -105,14 +105,14 @@
                                                               :y (+ (-> spaceship :pos :y) (/ (-> spaceship :vel :y) 2))}})
                                                 star))
                            stars)
-        thrust (scale 0.005 (:stick controller))
+        thrust (scale 0.001 (:stick controller))
         acceleration (-> (add-accelerations accelerations)
                          (update :x + (:x thrust))
                          (update :y + (:y thrust)))]
     {:pos   {:x (mod (+ (-> spaceship :pos :x) (-> spaceship :vel :x) (/ (:x acceleration) 2)) 768)
              :y (mod (+ (-> spaceship :pos :y) (-> spaceship :vel :y) (/ (:y acceleration) 2)) 1024)}
      :vel   (limit {:x (+ (-> spaceship :vel :x) (:x acceleration))
-                    :y (+ (-> spaceship :vel :y) (:y acceleration))} 5)
+                    :y (+ (-> spaceship :vel :y) (:y acceleration))} 3)
      :color (:color spaceship)
      :test  (:test spaceship)}))
 
@@ -146,8 +146,8 @@
                          :light-blue :yellow)
                 :pos {:x (mod (+ (-> star :pos :x) (-> star :vel :x) (/ (:x acceleration) 2)) 768)
                       :y (mod (+ (-> star :pos :y) (-> star :vel :y) (/ (:y acceleration) 2)) 1024)}
-                :vel {:x (+ (-> star :vel :x) (:x acceleration))
-                      :y (+ (-> star :vel :y) (:y acceleration))}
+                :vel (limit {:x (+ (-> star :vel :x) (:x acceleration))
+                             :y (+ (-> star :vel :y) (:y acceleration))} 2)
                 :radius (min 43 (max 42 (+ (:radius star) (- (rand-int 3) 1)))))))
 
 
@@ -169,7 +169,7 @@
 
 
 (def initial-state {:spaceships [spaceship]
-                    :stars      [star1 star2]
+                    :stars      [star1]
                     :controller controller})
 
 (defonce universe (atom initial-state))
