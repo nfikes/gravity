@@ -180,7 +180,7 @@
   (let [{:keys [box stick] :as controller} (:controller @universe)]
     (c/stroke-style "#B0E0E6")
     (c/stroke-rect (:pos box) (:size box))
-    #_(c/stroke-rect (+ (:x box) 5) (+ (:y box) 5) (- (:w box) 10) (- (:h box) 10))
+    (c/stroke-rect (v/+ (:pos box) (v/vector 5 5)) (v/- (:size box) (v/vector 10 10)))
     (c/stroke-circle (v/+ (center-of-controller controller) (:stick controller)) 30)))
 
 (defn draw-state
