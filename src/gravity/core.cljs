@@ -73,9 +73,9 @@
 
 (defn calc-acceleration
   [a b]
-  (let [distance (calc-distance a b)
-        delta-x (- (:x a) (:x b))
-        delta-y (- (:y a) (:y b))
+  (let [distance (calc-distance (:pos a) (:pos b))
+        delta-x (- (-> a :pos :x) (-> b :pos :x))
+        delta-y (- (-> a :pos :y) (-> b :pos :y))
         accel-strength (/ -500 (square distance))
         ratio (/ accel-strength distance)
         a-x (* ratio delta-x)
@@ -113,8 +113,8 @@
                          (update :y + (:y thrust)))]
     {:pos   {:x (mod (+ (-> spaceship :pos :x) (-> spaceship :vel :x) (/ (:x acceleration) 2)) 768)
              :y (mod (+ (-> spaceship :pos :y) (-> spaceship :vel :y) (/ (:y acceleration) 2)) 1024)}
-     :vel   {:x (+ (-> spaceship :vel :x) (:x acceleration))
-             :y (+ (-> spaceship :vel :y) (:y acceleration))}
+     :vel   (limit {:x (+ (-> spaceship :vel :x) (:x acceleration))
+                    :y (+ (-> spaceship :vel :y) (:y acceleration))} 5)
      :color (:color spaceship)
      :test  (:test spaceship)}))
 
