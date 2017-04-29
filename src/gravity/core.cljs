@@ -167,7 +167,8 @@
 
 (defn reset
   []
-  (reset! universe initial-state))
+  (reset! universe initial-state)
+  (c/clear-rect (:ctx @universe) v/zero (v/vector 768 1024)))
 
 (defn in-controller?
   [controller pos]
@@ -215,8 +216,8 @@
   [ctx controller]
   (let [{:keys [box stick]} controller]
     (c/clear-rect ctx (:pos box) (:size box))
-    (c/clear-rect ctx (v/+ (center-of-controller controller) (:stick controller) (v/- (v/vector 32 32)))
-                  (v/vector 64 64))))
+    (c/clear-rect ctx (v/+ (center-of-controller controller) (:stick controller) (v/- (v/vector 31 31)))
+                  (v/vector 62 62))))
 
 (defn draw-controller
   [ctx controller]
