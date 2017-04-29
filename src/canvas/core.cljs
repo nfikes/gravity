@@ -1,4 +1,6 @@
 (ns canvas.core
+  (:require-macros
+    [canvas.core])
   (:require
     [vector.core :as v]))
 
@@ -17,7 +19,8 @@
   [ctx ss]
   (set! (.-strokeStyle ctx) ss))
 
-(defn clear-rect [ctx pos size]
+(defn clear-rect
+  [ctx pos size]
   (.clearRect ctx (.-x pos) (.-y pos) (.-x size) (.-y size)))
 
 (defn fill-rect
