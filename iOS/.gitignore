@@ -16,7 +16,3 @@ profile
 *.moved-aside
 DerivedData
 .idea/
-
-# Ignoring App folder for
-# ease of implementation
-App
