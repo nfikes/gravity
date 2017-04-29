@@ -9,35 +9,33 @@
   (let [canvas (.getElementById js/document "canvas")]
     (.getContext canvas "2d")))
 
-(defonce ctx (get-context))
-
 (defn fill-style
-  [fs]
+  [ctx fs]
   (set! (.-fillStyle ctx) fs))
 
 (defn stroke-style
-  [ss]
+  [ctx ss]
   (set! (.-strokeStyle ctx) ss))
 
-(defn clear-rect [pos size]
+(defn clear-rect [ctx pos size]
   (.clearRect ctx (.-x pos) (.-y pos) (.-x size) (.-y size)))
 
 (defn fill-rect
-  [pos size]
+  [ctx pos size]
   (.fillRect ctx (.-x pos) (.-y pos) (.-x size) (.-y size)))
 
 (defn stroke-rect
-  [pos size]
+  [ctx pos size]
   (.strokeRect ctx (.-x pos) (.-y pos) (.-x size) (.-y size)))
 
 (defn fill-circle
-  [pos radius]
+  [ctx pos radius]
   (.beginPath ctx)
   (.arc ctx (.-x pos) (.-y pos) radius 0 TWO-PI)
   (.fill ctx))
 
 (defn stroke-circle
-  [pos radius]
+  [ctx pos radius]
   (.beginPath ctx)
   (.arc ctx (.-x pos) (.-y pos) radius 0 TWO-PI)
   (.stroke ctx))

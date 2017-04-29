@@ -108,7 +108,8 @@
                                     (assoc :stick v/zero))))))
 
 
-(def initial-state {:spaceships [spaceship]
+(def initial-state {:ctx (c/get-context)
+                    :spaceships [spaceship]
                     :stars      [star1]
                     :controller controller})
 
@@ -176,25 +177,26 @@
   (swap! universe update-universe))
 
 (defn draw-controller
-  []
+  [ctx]
   (let [{:keys [box stick] :as controller} (:controller @universe)]
-    (c/stroke-style "#B0E0E6")
-    (c/stroke-rect (:pos box) (:size box))
-    (c/stroke-rect (v/+ (:pos box) (v/vector 5 5)) (v/- (:size box) (v/vector 10 10)))
-    (c/stroke-circle (v/+ (center-of-controller controller) (:stick controller)) 30)))
+    (c/stroke-style ctx "#B0E0E6")
+    (c/stroke-rect ctx (:pos box) (:size box))
+    (c/stroke-rect ctx (v/+ (:pos box) (v/vector 5 5)) (v/- (:size box) (v/vector 10 10)))
+    (c/stroke-circle ctx (v/+ (center-of-controller controller) (:stick controller)) 30)))
 
 (defn draw-state
   []
-  (c/clear-rect v/zero (v/vector 768 1024))
-  (c/stroke-style "#ff0000")
-  (doseq [spaceship (:spaceships @universe)]
-    (c/stroke-rect (v/- (:pos spaceship) (v/vector 10 10)) (v/vector 20 20)))
-  (doseq [star (:stars @universe)]
-    (c/stroke-style "#ffff00")
-    (c/stroke-circle (:pos star) (:radius star)))
-  (c/fill-style "#B0E0E6")
-  (c/fill-rect v/zero (v/vector 768 24))
-  (draw-controller))
+  (let [ctx (:ctx @universe)]
+    (c/clear-rect ctx v/zero (v/vector 768 1024))
+    (c/stroke-style ctx "#ff0000")
+    (doseq [spaceship (:spaceships @universe)]
+      (c/stroke-rect ctx (v/- (:pos spaceship) (v/vector 10 10)) (v/vector 20 20)))
+    (doseq [star (:stars @universe)]
+      (c/stroke-style ctx "#ffff00")
+      (c/stroke-circle ctx (:pos star) (:radius star)))
+    (c/fill-style ctx "#B0E0E6")
+    (c/fill-rect ctx v/zero (v/vector 768 24))
+    (draw-controller ctx)))
 
 
 (defonce interval-id-atom (atom nil))
