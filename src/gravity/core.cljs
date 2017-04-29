@@ -91,6 +91,55 @@
                 :radius (min 43 (max 42 (+ (:radius star) (- (rand-int 3) 1)))))))
 
 
+(def touch-event-queue (atom []))
+
+(declare in-controller? touch-pos->stick)
+
+(defn process-touch-start
+  [universe pos]
+  (let [controller (:controller universe)]
+    (cond
+      (in-controller? controller pos)
+      (assoc universe :controller (-> controller
+                               (assoc :active true)
+                               (assoc :stick (touch-pos->stick pos controller))))
+      :else
+      universe)))
+
+(defn process-touch-move
+  [universe pos]
+  (let [controller (:controller universe)]
+    (cond
+      (:active controller)
+      (assoc-in universe [:controller :stick] (touch-pos->stick pos controller))
+      :else
+      universe)))
+
+(defn process-touch-end
+  [universe pos]
+  (let [controller (:controller universe)]
+    (cond
+      (:active controller)
+      (assoc-in universe [:controller :active] false)
+      :else
+      universe)))
+
+(defn process-touch-event
+  [universe [kind pos]]
+  (case kind
+    :start (process-touch-start universe pos)
+    :move (process-touch-move universe pos)
+    :end (process-touch-end universe pos)))
+
+(defn process-touch-event-queue
+  [universe]
+  (let [touch-events @touch-event-queue]
+    (reset! touch-event-queue [])
+    (reduce
+      process-touch-event
+      universe
+      touch-events)))
+
 (defn update-universe
   [universe]
   (-> universe
@@ -102,6 +151,7 @@
                        (map (fn [star]
                               (update-star star (:spaceships universe) (remove #{star} (:stars universe))))
                             stars)))
+      (process-touch-event-queue)
       (update :controller (fn [controller]
                             (cond-> controller
                                     (not (:active controller))
@@ -134,41 +184,26 @@
   (limit (v/- pos (center-of-controller controller))
          (controller-limit controller)))
 
+
 (defn touch-start
   [pos]
-  (swap! universe
-         (fn [{:keys [controller] :as u}]
-           (cond
-             (in-controller? controller pos)
-             (assoc u :controller (-> controller
-                                      (assoc :active true)
-                                      (assoc :stick (touch-pos->stick pos controller))))
-             :else
-             u))))
+  (swap! touch-event-queue conj [:start pos]))
 
 (c/register-touch-start #(touch-start %))
 
 (defn touch-move
   [pos]
-  (swap! universe
-         (fn [{:keys [controller] :as u}]
-           (cond
-             (:active controller)
-             (assoc-in u [:controller :stick] (touch-pos->stick pos controller))
-             :else
-             u))))
+  (swap! touch-event-queue (fn [queue]
+                             (let [debounced (if (= :move (first (peek queue)))
+                                               (pop queue)
+                                               queue)]
+                               (conj debounced [:move pos])))))
 
 (c/register-touch-move #(touch-move %))
 
 (defn touch-end
   [pos]
-  (swap! universe
-         (fn [{:keys [controller] :as u}]
-           (cond
-             (:active controller)
-             (assoc-in u [:controller :active] false)
-             :else
-             u))))
+  (swap! touch-event-queue conj [:end pos]))
 
 (c/register-touch-end #(touch-end %))
 
